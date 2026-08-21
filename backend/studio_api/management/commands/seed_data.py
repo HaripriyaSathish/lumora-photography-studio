@@ -7,7 +7,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write("Seeding database...")
 
-        # 1. Seed Categories
+        # 1. Seed Categories & keep map of slug -> Category object
         categories_data = [
             {'name': 'Weddings', 'slug': 'wedding', 'description': 'Emotional storytelling, timeless rituals, and candid romantic glances captured with cinematic elegance.', 'cover_image': 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=85&w=1200', 'display_order': 1},
             {'name': 'Portraits', 'slug': 'portrait', 'description': 'Striking individual, executive, and artist portraits defined by expressive natural lighting and character.', 'cover_image': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=1200', 'display_order': 2},
@@ -17,13 +17,13 @@ class Command(BaseCommand):
             {'name': 'Commercial', 'slug': 'commercial', 'description': 'Dynamic product, architectural, and brand campaign imagery engineered to elevate market presence.', 'cover_image': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=85&w=1200', 'display_order': 6},
         ]
 
-        cat_fields = {f.name for f in Category._meta.get_fields()}
+        category_objs = {}
         for cat in categories_data:
-            clean_cat = {k: v for k, v in cat.items() if k in cat_fields}
-            Category.objects.get_or_create(
+            obj, _ = Category.objects.get_or_create(
                 slug=cat['slug'],
-                defaults=clean_cat
+                defaults=cat
             )
+            category_objs[cat['slug']] = obj
 
         # 2. Seed Services
         services_data = [
@@ -35,6 +35,7 @@ class Command(BaseCommand):
                 'numeric_price': 45000,
                 'image_url': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=85&w=1000',
                 'icon_name': 'HeartHandshake',
+                'category_slug': 'wedding',
                 'features': 'Multi-angle candid & traditional coverage\nDual master photographers + drone aerials\nArtisan leather album + online 4K gallery\nColor-graded highlight reel & teasers'
             },
             {
@@ -45,6 +46,7 @@ class Command(BaseCommand):
                 'numeric_price': 12000,
                 'image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=1000',
                 'icon_name': 'UserCheck',
+                'category_slug': 'portrait',
                 'features': 'Tailored lighting setups & creative moodboards\nOn-site hair and makeup styling assistance\nHigh-end magazine retouching\nInstant raw image review on tethered monitors'
             },
             {
@@ -55,6 +57,7 @@ class Command(BaseCommand):
                 'numeric_price': 30000,
                 'image_url': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=85&w=1000',
                 'icon_name': 'Sparkles',
+                'category_slug': 'fashion',
                 'features': 'Comprehensive creative direction & location scouting\nCommercial licensing for print & digital billboard use\nModel casting & wardrobe styling collaboration\nNext-day editorial batch delivery'
             },
             {
@@ -65,19 +68,23 @@ class Command(BaseCommand):
                 'numeric_price': 20000,
                 'image_url': 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=85&w=1000',
                 'icon_name': 'CalendarCheck',
+                'category_slug': 'event',
                 'features': 'Real-time press upload for same-day PR releases\nMulti-stage concurrent documentation\nLow-light prime optics without harsh flashes\nFull uncompressed high-res archive'
             }
         ]
 
         service_fields = {f.name for f in Service._meta.get_fields()}
         for srv in services_data:
+            cat_slug = srv.pop('category_slug', None)
             clean_srv = {k: v for k, v in srv.items() if k in service_fields}
+            if 'category' in service_fields and cat_slug in category_objs:
+                clean_srv['category'] = category_objs[cat_slug]
             Service.objects.get_or_create(
                 title=srv['title'],
                 defaults=clean_srv
             )
 
-        # 3. Seed Packages (with numeric_price explicitly included)
+        # 3. Seed Packages
         packages_data = [
             {
                 'name': 'Essential',
@@ -120,18 +127,21 @@ class Command(BaseCommand):
                 defaults=clean_pkg
             )
 
-        # 4. Seed Gallery Images
+        # 4. Seed Gallery Images with ForeignKey Category instance
         gallery_data = [
-            {'title': 'The Royal Heritage Nuptials', 'category': 'wedding', 'image_url': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Aanya & Siddharth', 'location': 'Udaipur, Rajasthan', 'year': '2026'},
-            {'title': 'Vogue Chroma Editorial', 'category': 'fashion', 'image_url': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Maison Eclat Paris', 'location': 'Studio Lumora 01', 'year': '2026'},
-            {'title': 'Soul & Silhouette Portrait', 'category': 'portrait', 'image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Elena Rostova', 'location': 'Mumbai Art District', 'year': '2026'},
-            {'title': 'Minimalist Horology Campaign', 'category': 'commercial', 'image_url': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Vanguard Chronometers', 'location': 'Lumora Macro Lab', 'year': '2026'},
-            {'title': 'Twilight Coastal Romance', 'category': 'couples', 'image_url': 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Rhea & Kabir', 'location': 'Goa Coastal Cliffs', 'year': '2026'}
+            {'title': 'The Royal Heritage Nuptials', 'category_slug': 'wedding', 'image_url': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Aanya & Siddharth', 'location': 'Udaipur, Rajasthan', 'year': '2026'},
+            {'title': 'Vogue Chroma Editorial', 'category_slug': 'fashion', 'image_url': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Maison Eclat Paris', 'location': 'Studio Lumora 01', 'year': '2026'},
+            {'title': 'Soul & Silhouette Portrait', 'category_slug': 'portrait', 'image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Elena Rostova', 'location': 'Mumbai Art District', 'year': '2026'},
+            {'title': 'Minimalist Horology Campaign', 'category_slug': 'commercial', 'image_url': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Vanguard Chronometers', 'location': 'Lumora Macro Lab', 'year': '2026'},
+            {'title': 'Twilight Coastal Romance', 'category_slug': 'couples', 'image_url': 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=85&w=1200', 'is_featured': True, 'client_name': 'Rhea & Kabir', 'location': 'Goa Coastal Cliffs', 'year': '2026'}
         ]
 
         gallery_fields = {f.name for f in GalleryImage._meta.get_fields()}
         for gal in gallery_data:
+            cat_slug = gal.pop('category_slug', None)
             clean_gal = {k: v for k, v in gal.items() if k in gallery_fields}
+            if 'category' in gallery_fields and cat_slug in category_objs:
+                clean_gal['category'] = category_objs[cat_slug]
             GalleryImage.objects.get_or_create(
                 title=gal['title'],
                 defaults=clean_gal
