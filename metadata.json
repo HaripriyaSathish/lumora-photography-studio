@@ -1,0 +1,6 @@
+{
+  "name": "LUMORA Photography Studio",
+  "description": "Premium photography studio landing page and management platform featuring weddings, portraits, editorial fashion, commercial campaigns, dynamic Cloudinary gallery, interactive booking enquiry system, and direct client communication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
