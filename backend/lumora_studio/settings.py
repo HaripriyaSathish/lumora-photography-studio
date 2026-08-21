@@ -5,7 +5,7 @@ Configured for single-URL fullstack Render deployment (serving React Vite build)
 
 import os
 from pathlib import Path
-import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'lumora_backend.urls'
+ROOT_URLCONF = 'lumora_studio.urls'
 
 # Path to the compiled React Vite build index.html
 FRONTEND_DIST_DIR = os.path.join(BASE_DIR, '..', 'frontend', 'dist')
@@ -76,15 +76,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'lumora_backend.wsgi.application'
+WSGI_APPLICATION = 'lumora_studio.wsgi.application'
 
 # Database Configuration
 # Uses DATABASE_URL environment variable on Render (PostgreSQL), falls back to SQLite locally
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
