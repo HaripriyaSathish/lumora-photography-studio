@@ -1,11 +1,10 @@
 """
-Django settings for lumora_backend project.
-Configured for single-URL fullstack Render deployment (serving React Vite build).
+Django settings for lumora_studio project.
+Configured for single-URL fullstack Render deployment serving Vite React build.
 """
 
 import os
 from pathlib import Path
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,7 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 
-    # Local Django Apps (adjust app name if different in your project)
+    # Local Django App
     'studio_api',
 ]
 
@@ -54,13 +53,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'lumora_studio.urls'
 
-# Path to the compiled React Vite build index.html
+# Path to the compiled React Vite build folder
 FRONTEND_DIST_DIR = os.path.join(BASE_DIR, '..', 'frontend', 'dist')
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # Allows Django to serve the React index.html
         'DIRS': [
             FRONTEND_DIST_DIR,
         ],
@@ -78,8 +76,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'lumora_studio.wsgi.application'
 
-# Database Configuration
-# Uses DATABASE_URL environment variable on Render (PostgreSQL), falls back to SQLite locally
+# Database Configuration (SQLite)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -113,13 +110,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Collect Vite React compiled assets along with Django static assets
+# 1. WhiteNoise serves root files (favicon, manifest, assets) from frontend/dist
+WHITENOISE_ROOT = FRONTEND_DIST_DIR
+
+# 2. Add frontend dist folder to STATICFILES_DIRS
 STATICFILES_DIRS = []
 if os.path.exists(FRONTEND_DIST_DIR):
     STATICFILES_DIRS.append(FRONTEND_DIST_DIR)
 
-# WhiteNoise storage with hash and compression for blazing fast cached assets
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# 3. Compressed static files storage
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files (for user uploads)
 MEDIA_URL = '/media/'
@@ -137,6 +137,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# CORS settings (allows local development from localhost:5173 / localhost:3000)
+# CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
