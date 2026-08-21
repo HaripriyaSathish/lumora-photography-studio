@@ -19,3 +19,6 @@ python manage.py migrate
 
 echo "--- Auto-Creating Superuser if Not Exists ---"
 python manage.py createsuperuser --no-input || true
+
+echo "--- Seeding Initial Data ---"
+python manage.py seed_data
